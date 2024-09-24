@@ -1,5 +1,9 @@
 {
   "dependencies": {
+    "@types/string-similarity": "^4.0.2",
+    "deadlock-content": "^1.1.9",
+    "string-similarity": "^4.0.4",
     "vercel": "^37.4.2"
-  }
+  },
+  "type": "module"
 }

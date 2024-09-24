@@ -8,6 +8,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "dotenv": "^16.4.5",
+    "snoowrap": "^1.23.0",
     "vue": "^3.2.45"
   },
   "devDependencies": {
