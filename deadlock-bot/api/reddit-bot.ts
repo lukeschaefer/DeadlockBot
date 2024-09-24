@@ -22,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const subredditName = process.env.SUBREDDIT!;
     const subreddit = redditClient.getSubreddit(subredditName);
-    const comments = await subreddit.getNewComments({ limit: 30 });
+    const comments = await subreddit.getNewComments({ limit: 20 });
     let responses : string[] = [];
     for (const comment of comments) {
 
@@ -66,7 +66,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 function extractItemNames(text: string) {
   // Extract all text that's in two square brackets like [[so]]:
   const matches = [...(text.match(/\[\[(.*?)\]\]/g) ?? [])];
-  // remove the brackets:
   return matches.map((match) => match.slice(2, -2));
 }
 
@@ -86,7 +85,6 @@ const itemNames = Object.keys(items);
 
 function renderItemToMarkdown(item: Item) {
   const heading = `### ${item.name}  ($${item.price})\n`;
-  // const tier = `### Tier ${item.tier.level} ${item.type}\n`;
   const preReq = item.preReq ? `\nRequires: ${item.preReq!.name}\n` : '';
   const buildsInto = item.buildsInto ? `\n> Component of: **${item.buildsInto.name}**\n` : '';
   const stats = item.stats.map(stat => `    ${(stat.amount as number) > 0 ? "+" : ""}${stat.amount}${stat.unit} ${stat.stat}  `).join('\n') + '\n';
