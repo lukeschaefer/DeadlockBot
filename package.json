@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@types/string-similarity": "^4.0.2",
+    "@vercel/kv": "^2.0.0",
     "deadlock-content": "^1.1.9",
     "string-similarity": "^4.0.4",
     "vercel": "^37.4.2"

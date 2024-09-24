@@ -5,6 +5,7 @@ import Snoowrap from 'snoowrap';
 import dotenv from 'dotenv';
 import stringSimilarity from 'string-similarity';
 import {ALL_ITEMS, Item} from 'deadlock-content';
+import { kv } from "@vercel/kv";
 
 dotenv.config();
 
@@ -19,46 +20,50 @@ const redditClient = new Snoowrap({
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  kv.incr("reddit-bot-requests");
   try {
     const subredditName = process.env.SUBREDDIT!;
     const subreddit = redditClient.getSubreddit(subredditName);
     const comments = await subreddit.getNewComments({ limit: 20 });
     let responses : string[] = [];
+
     for (const comment of comments) {
+      kv.incr("scanned-comments");
 
       const referencedItems = extractItemNames(comment.body);
-
+      kv.incrby("referenced-items", referencedItems.length);
       if(referencedItems.length ==  0) continue;
 
       // Only check the first 10 items just in case of a weird edge case
       const matchedItems = matchItems(referencedItems.slice(0, 10));
-      console.log(`Matched ${matchedItems.length} out of ${referencedItems.length} items.`);
-
+      kv.incrby("matched-items", matchedItems.length);
       if(matchedItems.length == 0) continue;
+
       const disclaimer = renderDisclaimer(matchedItems[0]);
       const markdown = matchedItems.map(renderItemToMarkdown).join('\n------\n\n') + disclaimer;
       responses.push(markdown);
 
       // Check if already replied
       const replies = await comment.expandReplies({ limit: 1, depth: 1 });
-
       const alreadyReplied = replies.replies.some(
         (reply: any) => reply.author.name === redditClient.username
       );
 
-      if (!alreadyReplied) {
-        try {
-          await comment.reply(markdown);
-          console.log(`Replied to comment ID: ${comment.id}`);  
-        } catch(error) {
-          console.log(`Unable to reply to comment ID: ${comment.id}`);
-          console.log(error);
-        }
+      if (alreadyReplied) continue;
+
+      try {
+        await comment.reply(markdown);
+        kv.incr("replied-comments");
+        console.log(`Replied to comment ID: ${comment.id}`);  
+      } catch(error) {
+        kv.incr("failed-replies");
+        console.log(`Unable to reply to comment ID: ${comment.id}`);
+        console.log(error);
       }
     }
     res.send("FOUND " + responses.length + " comments!\n\n" + responses.join('\n\n------\n\n'));
   } catch (error) {
-    // console.error('Error in Reddit bot function:', error);
+    kv.incr("reddit-bot-failures");
     res.status(500).send('Error in Reddit bot function.');
   }
 }
