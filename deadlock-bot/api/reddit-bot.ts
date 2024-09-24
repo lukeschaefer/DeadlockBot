@@ -8,7 +8,7 @@ import {ALL_ITEMS, Item} from 'deadlock-content';
 
 dotenv.config();
 
-const MIN_CONFIDENCE = Number(process.env.MIN_CONFIDENCE) || 0.45;
+const MIN_CONFIDENCE = Number(process.env.MIN_CONFIDENCE) || 0.35;
 
 const redditClient = new Snoowrap({
   userAgent: process.env.USER_AGENT!,
@@ -52,6 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           console.log(`Replied to comment ID: ${comment.id}`);  
         } catch(error) {
           console.log(`Unable to reply to comment ID: ${comment.id}`);
+          console.log(error);
         }
       }
     }
